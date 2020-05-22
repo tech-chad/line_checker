@@ -1,5 +1,7 @@
 import pytest
 
+from unittest import mock
+
 from src import line_checker
 
 
@@ -128,8 +130,8 @@ def test_checker_three_fail_lines():
         "",
         "",
         "if __name__ == '__main__':",
-        "    main()  # this is a call to the main function.  the main function "
-        "is where it is all at.  just call main()",
+        "    main()  # this is a call to the main function.  the main function"
+        " is where it is all at.  just call main()",
         "",
     ]
     result = line_checker.checker(line_data)
@@ -138,9 +140,10 @@ def test_checker_three_fail_lines():
 
 
 def test_display_check_completed(capsys):
-    line_checker.display_check_completed()
+    line_checker.display_check_completed(0.22)
     captured_output = capsys.readouterr().out
     assert "1 file checked" in captured_output
+    assert "0.22 s" in captured_output
 
 
 def test_display_summary_passed(capsys):
@@ -181,6 +184,39 @@ def test_display_error(capsys):
     assert "Aborting" in captured_output
 
 
+def test_elapse_time_init():
+    elapse_time = line_checker.ElapseTime()
+    assert elapse_time.start_time == 0.0
+    assert elapse_time.end_time == 0.0
+
+
+def test_elapse_time_start():
+    with mock.patch.object(line_checker.time, "time", return_value=1.0):
+        elapse_time = line_checker.ElapseTime()
+        elapse_time.start()
+        assert elapse_time.start_time == 1.0
+
+
+def test_elapse_time_end():
+    elapse_time = line_checker.ElapseTime()
+    with mock.patch.object(line_checker.time, "time", return_value=1.0):
+        elapse_time.start()
+    with mock.patch.object(line_checker.time, "time", return_value=3.5):
+        elapse_time.stop()
+    assert elapse_time.start_time == 1.0
+    assert elapse_time.end_time == 3.5
+
+
+def test_elapse_time_get():
+    elapse_time = line_checker.ElapseTime()
+    with mock.patch.object(line_checker.time, "time", return_value=1.0):
+        elapse_time.start()
+    with mock.patch.object(line_checker.time, "time", return_value=3.5):
+        elapse_time.stop()
+    result = elapse_time.get_elapse_time()
+    assert result == 2.5
+
+
 def test_argument_parsing_file():
     result = line_checker.argument_parsing(["test.py"])
     assert result.file == "test.py"
@@ -196,3 +232,13 @@ def test_argument_parsing_help(capsys):
         line_checker.argument_parsing(["-h"])
     captured_output = capsys.readouterr().out
     assert "usage" in captured_output
+
+
+def test_main_display_elapse_time(make_test_file, capsys):
+    test_file = make_test_file("test.py", "# line 1")
+    with mock.patch.object(line_checker.ElapseTime,
+                           "get_elapse_time",
+                           return_value=2.5):
+        line_checker.main([test_file])
+    captured_output = capsys.readouterr().out
+    assert "2.50 s" in captured_output

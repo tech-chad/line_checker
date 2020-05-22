@@ -1,6 +1,7 @@
 """ Line length checker. """
 import argparse
 import shutil
+import time
 
 
 from typing import List
@@ -13,6 +14,21 @@ SEP = "-"
 
 class LineCheckerError(Exception):
     pass
+
+
+class ElapseTime:
+    def __init__(self):
+        self.start_time = 0.0
+        self.end_time = 0.0
+
+    def start(self):
+        self.start_time = time.time()
+
+    def stop(self):
+        self.end_time = time.time()
+
+    def get_elapse_time(self):
+        return self.end_time - self.start_time
 
 
 def verify_filename(filename: str) -> bool:
@@ -45,9 +61,9 @@ def checker(line_data: List[str]) -> List[Tuple[int, int]]:
     return fail_lines
 
 
-def display_check_completed() -> None:
+def display_check_completed(elapse_time: float) -> None:
     terminal_col, _ = shutil.get_terminal_size()
-    title = "1 file checked in 0.01 seconds"
+    title = f"1 file checked in {elapse_time:.2f} s"
     title_sep = SEP * int((terminal_col/2) - 1 - len(title)/2)
     completed_line = f"{title_sep} {title} {title_sep}"
     print(completed_line)
@@ -101,6 +117,8 @@ def argument_parsing(argv: list = None) -> argparse.Namespace:
 def main(argv: list = None) -> int:
     args = argument_parsing(argv)
 
+    elapse_time = ElapseTime()
+    elapse_time.start()
     display_welcome()
     if verify_filename(args.file):
         try:
@@ -115,7 +133,8 @@ def main(argv: list = None) -> int:
             else:
                 file_failed = "PASSED"
 
-            display_check_completed()
+            elapse_time.stop()
+            display_check_completed(elapse_time.get_elapse_time())
             display_summary(args.file, file_failed, fail_lines)
             return 0
 
