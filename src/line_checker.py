@@ -52,11 +52,11 @@ def load_file(filename: str) -> List[str]:
     return line_data
 
 
-def checker(line_data: List[str]) -> List[Tuple[int, int]]:
+def checker(line_data: List[str], line_length: int) -> List[Tuple[int, int]]:
     fail_lines = []
     for i, line in enumerate(line_data):
         line_len = len(line)
-        if line_len >= DEFAULT_LINE_LENGTH:
+        if line_len > line_length:
             fail_lines.append((i, line_len))
     return fail_lines
 
@@ -111,6 +111,8 @@ def display_error(error_message) -> None:
 def argument_parsing(argv: list = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("file", type=str, help="Filename to check.")
+    parser.add_argument("-l", "--line_length", action="store", type=int,
+                        default=DEFAULT_LINE_LENGTH, help="max line length")
     return parser.parse_args(argv)
 
 
@@ -127,7 +129,7 @@ def main(argv: list = None) -> int:
             display_error("File is not found")
             return 1
         else:
-            fail_lines = checker(file_data)
+            fail_lines = checker(file_data, args.line_length)
             if fail_lines:
                 file_failed = "FAIL"
             else:

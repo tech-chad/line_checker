@@ -70,7 +70,7 @@ def test_load_file_not_found(tmpdir):
 
 def test_checker_no_lines():
     line_data = []
-    result = line_checker.checker(line_data)
+    result = line_checker.checker(line_data, line_checker.DEFAULT_LINE_LENGTH)
     assert len(result) == 0
     assert result == []
 
@@ -89,7 +89,7 @@ def test_checker_no_fail_lines():
         "    main()",
         "",
     ]
-    result = line_checker.checker(line_data)
+    result = line_checker.checker(line_data, line_checker.DEFAULT_LINE_LENGTH)
     assert len(result) == 0
     assert result == []
 
@@ -110,7 +110,7 @@ def test_checker_one_fail_line():
         "    main()",
         "",
     ]
-    result = line_checker.checker(line_data)
+    result = line_checker.checker(line_data, line_checker.DEFAULT_LINE_LENGTH)
     assert len(result) == 1
     assert result == [(5, 102)]
 
@@ -134,9 +134,43 @@ def test_checker_three_fail_lines():
         " is where it is all at.  just call main()",
         "",
     ]
-    result = line_checker.checker(line_data)
+    result = line_checker.checker(line_data, line_checker.DEFAULT_LINE_LENGTH)
     assert len(result) == 3
     assert result == [(5, 102), (6, 85), (10, 110)]
+
+
+@pytest.mark.parametrize("test_lengths, expected_len, expected_fails", [
+    (90, 2, [(4, 123), (6, 92)]),
+    (100, 1, [(4, 123)]),
+    (124, 0, []),
+    (123, 0, []),
+    (122, 1, [(4, 123)]),
+    (85, 3, [(4, 123), (6, 92), (10, 88)])
+
+])
+def test_checker_different_max_len(test_lengths, expected_len, expected_fails):
+    # line 0: 42, line 4: 123, line 6: 92, line 10: 88
+    line_data = [
+        "# first comment line explaining the script",
+        "import time",
+        "",
+        "",
+        "def main(s: int) -> None:  # main function that takes in seconds as"
+        " an int.  the seconds will be used in the sleep function",
+        "    sleep(s)",
+        "    print('Done sleeping and now exiting')  # this prints the text."
+        " main returns after print",
+        "",
+        "",
+        "if __name__ == '__main__':",
+        "    # this is the entry point into the script and anything after this"
+        " comment line runs.",
+        "    main()",
+        ""
+    ]
+    result = line_checker.checker(line_data, test_lengths)
+    assert len(result) == expected_len
+    assert result == expected_fails
 
 
 def test_display_check_completed(capsys):
@@ -222,6 +256,16 @@ def test_argument_parsing_file():
     assert result.file == "test.py"
 
 
+@pytest.mark.parametrize("test_args, expected_results", [
+    (["test.py"], 80),
+    (["test.py", "-l100"], 100),
+    (["test.py", "--line_length", "75"], 75),
+])
+def test_argument_parsing_line_length(test_args, expected_results):
+    result = line_checker.argument_parsing(test_args)
+    assert result.line_length == expected_results
+
+
 def test_argument_parsing_no_arguments():
     with pytest.raises(SystemExit):
         line_checker.argument_parsing([])
@@ -242,3 +286,36 @@ def test_main_display_elapse_time(make_test_file, capsys):
         line_checker.main([test_file])
     captured_output = capsys.readouterr().out
     assert "2.50 s" in captured_output
+
+
+@pytest.mark.parametrize("test_len, exp_result", [
+    ([], ["5        92", "8        104"]),
+    (["-l100"], ["8        104"]),
+    (["-l74"], ["5        92", "7        75", "8        104"])
+
+])
+def test_main_line_length_fail(make_test_file, capsys, test_len, exp_result):
+    file_contents = """# first line comment
+import time
+
+
+def main(seconds: int) -> None:  # this is the main function that takes in seconds as an int
+    print("before sleep")
+    time.sleep(seconds)  # this is the sleep function from the time module.
+    print("This is after the sleep function.  You can see the delay between the first print and this one
+
+
+if __main__ == "__name__":
+    main()
+    
+"""
+    filename = "foo.py"
+    test_file = make_test_file(filename, file_contents)
+    arguments = [test_file] + test_len
+    line_checker.main(arguments)
+    captured_output = capsys.readouterr().out
+    assert "[FAIL]" in captured_output
+    for line in exp_result:
+        assert line in captured_output
+    print(arguments)
+
