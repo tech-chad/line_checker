@@ -2,7 +2,7 @@ import pytest
 
 from unittest import mock
 
-from src import line_checker
+from line_checker import line_checker
 
 
 @pytest.fixture

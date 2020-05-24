@@ -1,1 +1,3 @@
-/other/TODO.yml
+/other/
+.pytest_cache
+venv
