@@ -31,6 +31,40 @@ class ElapseTime:
         return self.end_time - self.start_time
 
 
+class Display:
+    def __init__(self) -> None:
+        self.script_name = "Line Checker"
+        self.dot = "."
+        self.failed = "failed"
+        self.passed = "passed"
+
+    def welcome(self) -> None:
+        print(self.script_name)
+
+    def summary(self, num_checked: int, num_failed: int) -> None:
+        string = f"{num_checked} files checked"
+        if num_checked == 0:
+            state = ""
+        elif num_failed == 0:
+            state = ": passed"
+        elif num_failed == num_checked:
+            state = f": {self.failed}"
+        else:
+            state = f": {num_checked - num_failed} {self.passed}, "
+            state += f"{num_failed} {self.failed}"
+        print(f"{string}{state}")
+
+    def failed_details(self, filename: str,
+                       fail_lines: List[Tuple[int, int]]
+                       ) -> None:
+        print(f"{filename}")
+        for line in fail_lines:
+            print(f"  line: {line[0] + 1}  -  length: {line[1]}")
+
+    def error(self, msg: str) -> None:
+        print(msg)
+
+
 def verify_filename(filename: str) -> bool:
     # TODO add more checks to verify the file
     if filename.rsplit(".")[-1] == "py":
@@ -61,53 +95,6 @@ def checker(line_data: List[str], line_length: int) -> List[Tuple[int, int]]:
     return fail_lines
 
 
-def display_check_completed(elapse_time: float) -> None:
-    terminal_col, _ = shutil.get_terminal_size()
-    title = f"1 file checked in {elapse_time:.2f} s"
-    title_sep = SEP * int((terminal_col/2) - 1 - len(title)/2)
-    completed_line = f"{title_sep} {title} {title_sep}"
-    print(completed_line)
-
-
-def display_summary(filename: str,
-                    file_failed: str,
-                    fail_lines: List[Tuple[int, int]]) -> None:
-    dot = "."
-    terminal_col, _ = shutil.get_terminal_size()
-    # title = "Summary"
-    # title_sep = SEP * int((terminal_col/2) - 1 - len(title)/2)
-    # summary_line = f"{title_sep} {title} {title_sep}"
-
-    dot_fill = dot * (terminal_col - len(filename) - len(file_failed) - 5)
-    file_line = f"{filename}{dot_fill}[{file_failed}]"
-
-    print()
-    # print(summary_line)
-    print(file_line)
-    if fail_lines:
-        print("      Line     Length")
-        for line in fail_lines:
-            print(f"      {line[0] + 1}        {line[1]}")
-
-
-def display_welcome() -> None:
-    # use _ for terminal_lines
-    terminal_col, terminal_lines = shutil.get_terminal_size()
-    title = "Line Checker"
-    title_sep = SEP * int((terminal_col/2) - 1 - len(title)/2)
-    title_line = f"{title_sep} {title} {title_sep}"
-
-    print(title_line)
-    print("version: 0.0.0")
-    print()
-
-
-def display_error(error_message) -> None:
-    print(f"Error: {error_message}")
-    print()
-    print("Aborting")
-
-
 def argument_parsing(argv: list = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("file", type=str, help="Filename to check.")
@@ -118,31 +105,34 @@ def argument_parsing(argv: list = None) -> argparse.Namespace:
 
 def main(argv: list = None) -> int:
     args = argument_parsing(argv)
+    display = Display()
 
     elapse_time = ElapseTime()
     elapse_time.start()
-    display_welcome()
+    display.welcome()
+
+    fail_count = 0
+    check_count = 1
     if verify_filename(args.file):
         try:
             file_data = load_file(args.file)
         except FileNotFoundError:
-            display_error("File is not found")
+            display.error("Error: File not found")
+            display.summary(0, 0)
             return 1
         else:
             fail_lines = checker(file_data, args.line_length)
             if fail_lines:
-                file_failed = "FAIL"
-            else:
-                file_failed = "PASSED"
+                fail_count += 1
 
             elapse_time.stop()
-            display_check_completed(elapse_time.get_elapse_time())
-            display_summary(args.file, file_failed, fail_lines)
+            display.summary(check_count, fail_count)
+            if fail_count >= 1:
+                display.failed_details(args.file, fail_lines)
             return 0
 
     else:
-        display_error("File is not "
-                      "a check-able file")
+        display.summary(0, 0)
         return 1
 
 

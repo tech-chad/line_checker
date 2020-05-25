@@ -173,51 +173,6 @@ def test_checker_different_max_len(test_lengths, expected_len, expected_fails):
     assert result == expected_fails
 
 
-def test_display_check_completed(capsys):
-    line_checker.display_check_completed(0.22)
-    captured_output = capsys.readouterr().out
-    assert "1 file checked" in captured_output
-    assert "0.22 s" in captured_output
-
-
-def test_display_summary_passed(capsys):
-    line_checker.display_summary("test.py", "PASSED", [])
-    captured_output = capsys.readouterr().out
-    assert "test.py" in captured_output
-    assert "[PASSED]" in captured_output
-    assert "Line" not in captured_output
-    assert "Length" not in captured_output
-
-
-def test_display_summary_failed(capsys):
-    line_checker.display_summary("test.py", "FAIL", [(2, 85), (10, 90)])
-    captured_output = capsys.readouterr().out
-    assert "test.py" in captured_output
-    assert "[FAIL]" in captured_output
-    assert "Line" in captured_output
-    assert "Length" in captured_output
-    assert "3" in captured_output
-    assert "85" in captured_output
-    assert "11" in captured_output
-    assert "90" in captured_output
-    assert "10" not in captured_output
-
-
-def test_display_welcome(capsys):
-    line_checker.display_welcome()
-    captured_output = capsys.readouterr().out
-    assert "Line Checker" in captured_output
-    assert "-" in captured_output
-    assert "version:" in captured_output
-
-
-def test_display_error(capsys):
-    line_checker.display_error("error message")
-    captured_output = capsys.readouterr().out
-    assert "Error: error message" in captured_output
-    assert "Aborting" in captured_output
-
-
 def test_elapse_time_init():
     elapse_time = line_checker.ElapseTime()
     assert elapse_time.start_time == 0.0
@@ -276,46 +231,3 @@ def test_argument_parsing_help(capsys):
         line_checker.argument_parsing(["-h"])
     captured_output = capsys.readouterr().out
     assert "usage" in captured_output
-
-
-def test_main_display_elapse_time(make_test_file, capsys):
-    test_file = make_test_file("test.py", "# line 1")
-    with mock.patch.object(line_checker.ElapseTime,
-                           "get_elapse_time",
-                           return_value=2.5):
-        line_checker.main([test_file])
-    captured_output = capsys.readouterr().out
-    assert "2.50 s" in captured_output
-
-
-@pytest.mark.parametrize("test_len, exp_result", [
-    ([], ["5        92", "8        104"]),
-    (["-l100"], ["8        104"]),
-    (["-l74"], ["5        92", "7        75", "8        104"])
-
-])
-def test_main_line_length_fail(make_test_file, capsys, test_len, exp_result):
-    file_contents = """# first line comment
-import time
-
-
-def main(seconds: int) -> None:  # this is the main function that takes in seconds as an int
-    print("before sleep")
-    time.sleep(seconds)  # this is the sleep function from the time module.
-    print("This is after the sleep function.  You can see the delay between the first print and this one
-
-
-if __main__ == "__name__":
-    main()
-    
-"""
-    filename = "foo.py"
-    test_file = make_test_file(filename, file_contents)
-    arguments = [test_file] + test_len
-    line_checker.main(arguments)
-    captured_output = capsys.readouterr().out
-    assert "[FAIL]" in captured_output
-    for line in exp_result:
-        assert line in captured_output
-    print(arguments)
-
