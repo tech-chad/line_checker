@@ -17,31 +17,38 @@ class LineCheckerError(Exception):
 
 
 class ElapseTime:
-    def __init__(self):
+    def __init__(self) -> None:
         self.start_time = 0.0
         self.end_time = 0.0
 
-    def start(self):
+    def start(self) -> None:
         self.start_time = time.time()
 
-    def stop(self):
+    def stop(self) -> None:
         self.end_time = time.time()
 
-    def get_elapse_time(self):
+    def elapse_time(self) -> float:
         return self.end_time - self.start_time
 
 
 class Display:
-    def __init__(self) -> None:
+    def __init__(self, show_elapse_time: bool) -> None:
         self.script_name = "Line Checker"
         self.dot = "."
         self.failed = "failed"
         self.passed = "passed"
+        self.show_elapse_time = show_elapse_time
 
     def welcome(self) -> None:
         print(self.script_name)
 
-    def summary(self, num_checked: int, num_failed: int) -> None:
+    def summary(self, num_checked: int,
+                num_failed: int,
+                elapse_time: float) -> None:
+        if self.show_elapse_time:
+            elapse_time_str = f"  in {elapse_time:.2f}s"
+        else:
+            elapse_time_str = ""
         string = f"{num_checked} files checked"
         if num_checked == 0:
             state = ""
@@ -52,7 +59,7 @@ class Display:
         else:
             state = f": {num_checked - num_failed} {self.passed}, "
             state += f"{num_failed} {self.failed}"
-        print(f"{string}{state}")
+        print(f"{string}{state}{elapse_time_str}")
 
     def failed_details(self, filename: str,
                        fail_lines: List[Tuple[int, int]]
@@ -100,15 +107,17 @@ def argument_parsing(argv: list = None) -> argparse.Namespace:
     parser.add_argument("file", type=str, help="Filename to check.")
     parser.add_argument("-l", "--line_length", action="store", type=int,
                         default=DEFAULT_LINE_LENGTH, help="max line length")
+    parser.add_argument("-E", "--elapse_time", action="store_true",
+                        help="elapse time in seconds to run check")
     return parser.parse_args(argv)
 
 
 def main(argv: list = None) -> int:
+    elapse_timer = ElapseTime()
     args = argument_parsing(argv)
-    display = Display()
+    display = Display(args.elapse_time)
 
-    elapse_time = ElapseTime()
-    elapse_time.start()
+    elapse_timer.start()
     display.welcome()
 
     fail_count = 0
@@ -117,22 +126,24 @@ def main(argv: list = None) -> int:
         try:
             file_data = load_file(args.file)
         except FileNotFoundError:
+            elapse_timer.stop()
             display.error("Error: File not found")
-            display.summary(0, 0)
+            display.summary(0, 0, elapse_timer.elapse_time())
             return 1
         else:
             fail_lines = checker(file_data, args.line_length)
             if fail_lines:
                 fail_count += 1
 
-            elapse_time.stop()
-            display.summary(check_count, fail_count)
+            elapse_timer.stop()
+            display.summary(check_count, fail_count, elapse_timer.elapse_time())
             if fail_count >= 1:
                 display.failed_details(args.file, fail_lines)
             return 0
 
     else:
-        display.summary(0, 0)
+        elapse_timer.stop()
+        display.summary(0, 0, elapse_timer.elapse_time())
         return 1
 
 

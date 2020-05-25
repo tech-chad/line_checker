@@ -202,7 +202,7 @@ def test_elapse_time_get():
         elapse_time.start()
     with mock.patch.object(line_checker.time, "time", return_value=3.5):
         elapse_time.stop()
-    result = elapse_time.get_elapse_time()
+    result = elapse_time.elapse_time()
     assert result == 2.5
 
 
@@ -219,6 +219,14 @@ def test_argument_parsing_file():
 def test_argument_parsing_line_length(test_args, expected_results):
     result = line_checker.argument_parsing(test_args)
     assert result.line_length == expected_results
+
+
+@pytest.mark.parametrize("test_args, expected_result", [
+    (["foo.py"], False), (["foo.py", "-E"], True)
+])
+def test_argument_parsing_elapse_time(test_args, expected_result):
+    result = line_checker.argument_parsing(test_args)
+    assert result.elapse_time == expected_result
 
 
 def test_argument_parsing_no_arguments():
