@@ -239,3 +239,11 @@ def test_argument_parsing_help(capsys):
         line_checker.argument_parsing(["-h"])
     captured_output = capsys.readouterr().out
     assert "usage" in captured_output
+
+
+@pytest.mark.parametrize("test_args, expected_result", [
+    (["foo.py"], True), (["foo.py", "--no_color"], False),
+])
+def test_argument_parsing_no_color(test_args, expected_result):
+    result = line_checker.argument_parsing(test_args)
+    assert result.color == expected_result

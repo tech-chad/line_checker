@@ -32,11 +32,23 @@ class ElapseTime:
 
 
 class Display:
-    def __init__(self, show_elapse_time: bool) -> None:
+    def __init__(self,
+                 show_elapse_time: bool,
+                 display_color: bool = False) -> None:
+        if display_color:
+            pass
+            self.red = "\033[1;31m"
+            self.green = "\033[1;32m"
+            self.reset_color = "\033[0m"
+        else:
+            self.red = ""
+            self.green = ""
+            self.reset_color = ""
+
         self.script_name = "Line Checker"
         self.dot = "."
-        self.failed = "failed"
-        self.passed = "passed"
+        self.failed = f"{self.red}Failed{self.reset_color}"
+        self.passed = f"{self.green}Passed{self.reset_color}"
         self.show_elapse_time = show_elapse_time
 
     def welcome(self) -> None:
@@ -53,7 +65,7 @@ class Display:
         if num_checked == 0:
             state = ""
         elif num_failed == 0:
-            state = ": passed"
+            state = f": {self.passed}"
         elif num_failed == num_checked:
             state = f": {self.failed}"
         else:
@@ -69,7 +81,7 @@ class Display:
             print(f"  line: {line[0] + 1}  -  length: {line[1]}")
 
     def error(self, msg: str) -> None:
-        print(msg)
+        print(f"{self.red}{msg}{self.reset_color}")
 
 
 def verify_filename(filename: str) -> bool:
@@ -109,13 +121,15 @@ def argument_parsing(argv: list = None) -> argparse.Namespace:
                         default=DEFAULT_LINE_LENGTH, help="max line length")
     parser.add_argument("-E", "--elapse_time", action="store_true",
                         help="elapse time in seconds to run check")
+    parser.add_argument("--no_color", dest="color", action="store_false",
+                        help="turn off color output")
     return parser.parse_args(argv)
 
 
 def main(argv: list = None) -> int:
     elapse_timer = ElapseTime()
     args = argument_parsing(argv)
-    display = Display(args.elapse_time)
+    display = Display(args.elapse_time, args.color)
 
     elapse_timer.start()
     display.welcome()
