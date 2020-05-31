@@ -1,8 +1,9 @@
 """ Line length checker. """
 import argparse
-import shutil
+import os
 import time
 
+from identify import identify  # type: ignore
 
 from typing import List
 from typing import Tuple
@@ -84,14 +85,6 @@ class Display:
         print(f"{self.red}{msg}{self.reset_color}")
 
 
-def verify_filename(filename: str) -> bool:
-    # TODO add more checks to verify the file
-    if filename.rsplit(".")[-1] == "py":
-        return True
-    else:
-        return False
-
-
 def load_file(filename: str) -> List[str]:
     try:
         with open(filename, "r") as f:
@@ -103,6 +96,25 @@ def load_file(filename: str) -> List[str]:
     for d in data.splitlines():
         line_data.append(d)
     return line_data
+
+
+def discovery(path: str, tags_to_find: List[str],) -> List[str]:
+    # look at directory or file at path, get tags for each file save
+    # save wanted file (path) to a list and return the list
+    files_to_check = []
+    if os.path.isdir(path):
+        for item in os.listdir(path):
+            item_path = os.path.join(path, item)
+            tags = identify.tags_from_path(item_path)
+            for tf in tags_to_find:
+                if tf in tags:
+                    files_to_check.append(item_path)
+    else:
+        tags = identify.tags_from_path(path)
+        for tf in tags_to_find:
+            if tf in tags:
+                files_to_check.append(path)
+    return files_to_check
 
 
 def checker(line_data: List[str], line_length: int) -> List[Tuple[int, int]]:
@@ -135,30 +147,31 @@ def main(argv: list = None) -> int:
     display.welcome()
 
     fail_count = 0
-    check_count = 1
-    if verify_filename(args.file):
-        try:
-            file_data = load_file(args.file)
-        except FileNotFoundError:
-            elapse_timer.stop()
-            display.error("Error: File not found")
-            display.summary(0, 0, elapse_timer.elapse_time())
-            return 1
-        else:
-            fail_lines = checker(file_data, args.line_length)
-            if fail_lines:
-                fail_count += 1
+    fails = []
+    check_count = 0
 
-            elapse_timer.stop()
-            display.summary(check_count, fail_count, elapse_timer.elapse_time())
-            if fail_count >= 1:
-                display.failed_details(args.file, fail_lines)
-            return 0
-
-    else:
+    try:
+        files_to_check = discovery(args.file, ["python"])
+    except ValueError:
+        display.error("Error file not found during discovery")
         elapse_timer.stop()
         display.summary(0, 0, elapse_timer.elapse_time())
         return 1
+    else:
+        for file in files_to_check:
+            file_data = load_file(file)
+            fail_lines = checker(file_data, args.line_length)
+            check_count += 1
+            if fail_lines:
+                fail_count += 1
+                fails.append((file, fail_lines))
+        else:
+            elapse_timer.stop()
+            display.summary(check_count, fail_count, elapse_timer.elapse_time())
+            if fail_count > 0:
+                for fail_file in fails:
+                    display.failed_details(fail_file[0], fail_file[1])
+            return 0
 
 
 if __name__ == "__main__":

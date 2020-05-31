@@ -15,20 +15,6 @@ def make_test_file(tmpdir):
     return _make_test_file
 
 
-@pytest.mark.parametrize("test_names, expected_results", [
-    ("test.py", True),
-    ("dummpy.py", True),
-    ("hello.py", True),
-    ("test.txt", False),
-    ("test", False),
-    ("pytest", False),
-    ("test.c", False),
-])
-def test_verify_filename(test_names, expected_results):
-    result = line_checker.verify_filename(test_names)
-    assert result == expected_results
-
-
 def test_load_file(make_test_file):
     file_contents = "one line text file"
     filename = "test.txt"
