@@ -123,5 +123,3 @@ def test_display_full_file_failed(capsys):
   line: 34  -  length: 85
   line: 85  -  length: 91
 """
-
-
