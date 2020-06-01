@@ -1,3 +1,8 @@
 /other/
 .pytest_cache
 venv
+.mypy_cache
+dist/
+build
+line_checker.egg-info
+
