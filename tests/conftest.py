@@ -34,6 +34,7 @@ def make_temp_directory(tmpdir):
             self.temp_dir = tmpdir
             os.chdir(self.temp_dir)
             self.directory_list = []
+            self.file_list = []
 
         def add_directories_root(self, dir_name_list):
             for name in dir_name_list:
@@ -49,6 +50,12 @@ def make_temp_directory(tmpdir):
             else:
                 with open(filename, "w") as f:
                     f.write(" ")
+            self.file_list.append(filename)
+
+        def add_file(self, filename, contents):
+            with open(filename, "w") as f:
+                f.write(contents)
+            self.file_list.append(filename)
 
         def get_temp_directory(self, dir_name=None):
             if dir_name and dir_name in self.directory_list:
