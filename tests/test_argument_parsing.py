@@ -44,3 +44,12 @@ def test_argument_parsing_help(capsys):
 def test_argument_parsing_no_color(test_args, expected_result):
     result = line_checker.argument_parsing(test_args)
     assert result.color == expected_result
+
+
+@pytest.mark.parametrize("test_args, expected_result", [
+    (["foo.py"], False), (["foo.py", "-q"], True)
+])
+def test_argument_parsing_quiet_mode(test_args, expected_result):
+    result = line_checker.argument_parsing(test_args)
+    assert result.quiet_mode == expected_result
+

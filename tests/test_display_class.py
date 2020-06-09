@@ -123,3 +123,30 @@ def test_display_full_file_failed(capsys):
   line: 34  -  length: 85
   line: 85  -  length: 91
 """
+
+
+def test_display_summary_quiet_mode(capsys):
+    test_display = line_checker.Display(False, quiet_mode=True)
+    test_display.welcome()
+    captured = capsys.readouterr().out
+    assert captured == ""
+    test_display.summary(1, 0, 0.0)
+    captured = capsys.readouterr().out
+    assert captured == ""
+
+
+def test_display_summary_quiet_mode_failed(capsys):
+    test_display = line_checker.Display(False, quiet_mode=True)
+    test_display.welcome()
+    captured = capsys.readouterr().out
+    assert captured == ""
+    test_display.summary(1, 1, 0.0)
+    captured = capsys.readouterr().out
+    assert captured == "1 files checked: Failed\n"
+    test_display.failed_details("foo.py", [(33, 85), (84, 91)])
+    captured = capsys.readouterr().out
+    assert captured == """foo.py
+  line: 34  -  length: 85
+  line: 85  -  length: 91
+"""
+

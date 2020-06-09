@@ -35,7 +35,8 @@ class ElapseTime:
 class Display:
     def __init__(self,
                  show_elapse_time: bool,
-                 display_color: bool = False) -> None:
+                 display_color: bool = False,
+                 quiet_mode: bool = False) -> None:
         if display_color:
             pass
             self.red = "\033[1;31m"
@@ -51,13 +52,19 @@ class Display:
         self.failed = f"{self.red}Failed{self.reset_color}"
         self.passed = f"{self.green}Passed{self.reset_color}"
         self.show_elapse_time = show_elapse_time
+        self.quiet_mode = quiet_mode
 
     def welcome(self) -> None:
-        print(self.script_name)
+        if not self.quiet_mode:
+            print(self.script_name)
 
     def summary(self, num_checked: int,
                 num_failed: int,
                 elapse_time: float) -> None:
+
+        if self.quiet_mode and num_failed == 0:
+            return None
+
         if self.show_elapse_time:
             elapse_time_str = f"  in {elapse_time:.2f}s"
         else:
@@ -135,13 +142,15 @@ def argument_parsing(argv: list = None) -> argparse.Namespace:
                         help="elapse time in seconds to run check")
     parser.add_argument("--no_color", dest="color", action="store_false",
                         help="turn off color output")
+    parser.add_argument("-q", dest="quiet_mode", action="store_true",
+                        help="Quiet mode. No output unless fail or error")
     return parser.parse_args(argv)
 
 
 def main(argv: list = None) -> int:
     elapse_timer = ElapseTime()
     args = argument_parsing(argv)
-    display = Display(args.elapse_time, args.color)
+    display = Display(args.elapse_time, args.color, args.quiet_mode)
 
     elapse_timer.start()
     display.welcome()

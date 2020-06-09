@@ -396,3 +396,33 @@ def test_main_line_length_pass(make_test_file, capsys):
     captured_output = capsys.readouterr().out
     assert captured_output == expected_cap
     assert result == 0
+
+
+def test_main_file_passed_quiet_mode(make_test_file, capsys):
+    line_data = [
+        "# line 1 comment line",
+        "print('hello world')",
+    ]
+    file_data = "".join(line_data)
+    tf = make_test_file("foo.py", file_data)
+    expected_capture = ""
+    result = line_checker.main([tf, "-q"])
+    captured_output = capsys.readouterr().out
+    assert captured_output == expected_capture
+    assert result == 0
+
+
+def test_main_file_failed_quiet_mode(make_test_file, capsys):
+    line_data = [
+        "# line 1 comment line",
+        "print('hello world how are you.  foo.py is an test example of a"
+        " line that is too long')"
+    ]
+    file_data = "".join(line_data)
+    tf = make_test_file("foo.py", file_data)
+    expected_capture = "1 files checked: \033[1;31mFailed\033[0m\n"
+    expected_capture += f"{tf}\n  line: 1  -  length: 108\n"
+    result = line_checker.main([tf, "-q"])
+    captured_output = capsys.readouterr().out
+    assert captured_output == expected_capture
+    assert result == 0
