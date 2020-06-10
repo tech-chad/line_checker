@@ -53,3 +53,12 @@ def test_argument_parsing_quiet_mode(test_args, expected_result):
     result = line_checker.argument_parsing(test_args)
     assert result.quiet_mode == expected_result
 
+
+def test_display_version(capsys):
+    with pytest.raises(SystemExit):
+        line_checker.argument_parsing(["--version"])
+    captured_output = capsys.readouterr().out
+    assert captured_output == f"Version: {line_checker.version}\n"
+
+
+

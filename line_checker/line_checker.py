@@ -1,6 +1,7 @@
 """ Line length checker. """
 import argparse
 import os
+import sys
 import time
 
 from identify import identify  # type: ignore
@@ -10,6 +11,12 @@ from typing import Optional
 from typing import Sequence
 from typing import Tuple
 
+if sys.version_info >= (3, 8):
+    import importlib.metadata as importlib_metadata
+else:
+    import importlib_metadata
+
+version = importlib_metadata.version("line-checker")
 
 DEFAULT_LINE_LENGTH = 80
 SEP = "-"
@@ -146,6 +153,8 @@ def argument_parsing(argv: Optional[Sequence[str]] = None) -> argparse.Namespace
                         help="Quiet mode. No output unless fail or error")
     parser.add_argument("--no_color", dest="color", action="store_false",
                         help="turn off color output")
+    parser.add_argument("--version", action="version",
+                        version=f"Version: {version}")
     return parser.parse_args(argv)
 
 
