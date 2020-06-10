@@ -138,14 +138,14 @@ def checker(line_data: List[str], line_length: int) -> List[Tuple[int, int]]:
 def argument_parsing(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("file", type=str, help="Filename to check.")
-    parser.add_argument("-l", "--line_length", action="store", type=int,
+    parser.add_argument("-l", dest="line_length", action="store", type=int,
                         default=DEFAULT_LINE_LENGTH, help="max line length")
     parser.add_argument("-E", "--elapse_time", action="store_true",
                         help="elapse time in seconds to run check")
-    parser.add_argument("--no_color", dest="color", action="store_false",
-                        help="turn off color output")
     parser.add_argument("-q", dest="quiet_mode", action="store_true",
                         help="Quiet mode. No output unless fail or error")
+    parser.add_argument("--no_color", dest="color", action="store_false",
+                        help="turn off color output")
     return parser.parse_args(argv)
 
 
