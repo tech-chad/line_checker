@@ -6,6 +6,8 @@ import time
 from identify import identify  # type: ignore
 
 from typing import List
+from typing import Optional
+from typing import Sequence
 from typing import Tuple
 
 
@@ -133,7 +135,7 @@ def checker(line_data: List[str], line_length: int) -> List[Tuple[int, int]]:
     return fail_lines
 
 
-def argument_parsing(argv: list = None) -> argparse.Namespace:
+def argument_parsing(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("file", type=str, help="Filename to check.")
     parser.add_argument("-l", "--line_length", action="store", type=int,
@@ -147,7 +149,7 @@ def argument_parsing(argv: list = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: list = None) -> int:
+def main(argv: Optional[Sequence[str]] = None) -> int:
     elapse_timer = ElapseTime()
     args = argument_parsing(argv)
     display = Display(args.elapse_time, args.color, args.quiet_mode)
