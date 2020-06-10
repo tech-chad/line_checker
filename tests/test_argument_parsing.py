@@ -11,7 +11,7 @@ def test_argument_parsing_file():
 @pytest.mark.parametrize("test_args, expected_results", [
     (["test.py"], 80),
     (["test.py", "-l100"], 100),
-    (["test.py", "--line_length", "75"], 75),
+    (["test.py", "-l", "75"], 75),
 ])
 def test_argument_parsing_line_length(test_args, expected_results):
     result = line_checker.argument_parsing(test_args)
