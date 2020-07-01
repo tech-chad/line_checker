@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from line_checker import line_checker
@@ -426,3 +428,88 @@ def test_main_file_failed_quiet_mode(make_test_file, capsys):
     captured_output = capsys.readouterr().out
     assert captured_output == expected_capture
     assert result == 0
+
+
+def test_save_results_to_file_passed(make_test_file):
+    line_data = [
+        "# line 1 comment line",
+        "print('hello world')",
+    ]
+    file_data = "".join(line_data)
+    tf = make_test_file("foo.py", file_data)
+    test_date_time = "2020-01-01-142020"
+    with mock.patch.object(line_checker.time,
+                           "strftime",
+                           return_value=test_date_time):
+        result = line_checker.main([tf, "-S"])
+        with open(f"line_checker_out{test_date_time}", "r") as f:
+            data = f.read()
+        assert data == "line checker\n1 file checked: passed\n"
+        assert result == 0
+
+
+def test_save_results_to_file_fail(make_test_file):
+    line_data = [
+        "# line 1 comment line",
+        "print('hello world how are you.  foo.py is an test example of a"
+        " line that is too long')"
+    ]
+    file_data = "".join(line_data)
+    tf = make_test_file("foo.py", file_data)
+    test_date_time = "2020-01-01-142020"
+    with mock.patch.object(line_checker.time,
+                           "strftime",
+                           return_value=test_date_time):
+        result = line_checker.main([tf, "-S"])
+        expected = "line checker\n1 file checked: failed\n"
+        expected += f"{tf}\n  line 1 - length: 108\n"
+        with open(f"line_checker_out{test_date_time}", "r") as f:
+            data = f.read()
+        assert data == expected
+        assert result == 0
+
+
+def test_main_file_passed_quiet_mode_save_to_file(make_test_file, capsys):
+    line_data = [
+        "# line 1 comment line",
+        "print('hello world')",
+    ]
+    file_data = "".join(line_data)
+    tf = make_test_file("foo.py", file_data)
+    expected_capture = ""
+    test_date_time = "2020-01-01-142020"
+    with mock.patch.object(line_checker.time,
+                           "strftime",
+                           return_value=test_date_time):
+        result = line_checker.main([tf, "-q", "-S"])
+        captured_output = capsys.readouterr().out
+        assert captured_output == expected_capture
+        assert result == 0
+        with open(f"line_checker_out{test_date_time}", "r") as f:
+            data = f.read()
+        assert data == "line checker\n1 file checked: passed\n"
+
+
+def test_main_file_failed_quiet_mode_save_to_file(make_test_file, capsys):
+    line_data = [
+        "# line 1 comment line",
+        "print('hello world how are you.  foo.py is an test example of a"
+        " line that is too long')"
+    ]
+    file_data = "".join(line_data)
+    tf = make_test_file("foo.py", file_data)
+    expected_capture = "1 files checked: \033[1;31mFailed\033[0m\n"
+    expected_capture += f"{tf}\n  line: 1  -  length: 108\n"
+    test_date_time = "2020-01-01-142020"
+    with mock.patch.object(line_checker.time,
+                           "strftime",
+                           return_value=test_date_time):
+        result = line_checker.main([tf, "-q", "-S"])
+        captured_output = capsys.readouterr().out
+        assert captured_output == expected_capture
+        assert result == 0
+        expected = "line checker\n1 file checked: failed\n"
+        expected += f"{tf}\n  line 1 - length: 108\n"
+        with open(f"line_checker_out{test_date_time}", "r") as f:
+            data = f.read()
+        assert data == expected

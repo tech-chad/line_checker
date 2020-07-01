@@ -101,6 +101,22 @@ class Display:
         print(f"{self.red}{msg}{self.reset_color}")
 
 
+def save_results_to_file(file_list: List[str], fail_list: list):
+    filename = f"line_checker_out{time.strftime('%Y-%m-%d-%H%M%S')}"
+    data = ""
+    data += "line checker\n"
+    if fail_list:
+        data += f"{len(file_list)} file checked: failed\n"
+        for fail_file, fail_data in fail_list:
+            data += f"{fail_file}\n"
+            for line, length in fail_data:
+                data += f"  line {line + 1} - length: {length}\n"
+    else:
+        data += f"{len(file_list)} file checked: passed\n"
+    with open(filename, "w") as f:
+        f.write(data)
+
+
 def load_file(filename: str) -> List[str]:
     try:
         with open(filename, "r") as f:
@@ -151,6 +167,8 @@ def argument_parsing(argv: Optional[Sequence[str]] = None) -> argparse.Namespace
                         help="elapse time in seconds to run check")
     parser.add_argument("-q", dest="quiet_mode", action="store_true",
                         help="Quiet mode. No output unless fail or error")
+    parser.add_argument("-S", dest="save_to_file", action="store_true",
+                        help="Save output to file")
     parser.add_argument("--no_color", dest="color", action="store_false",
                         help="turn off color output")
     parser.add_argument("--version", action="version",
@@ -191,6 +209,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             if fail_count > 0:
                 for fail_file in fails:
                     display.failed_details(fail_file[0], fail_file[1])
+            if args.save_to_file:
+                save_results_to_file(files_to_check, fails)
             return 0
 
 

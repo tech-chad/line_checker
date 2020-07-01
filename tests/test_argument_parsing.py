@@ -61,4 +61,9 @@ def test_display_version(capsys):
     assert captured_output == f"Version: {line_checker.version}\n"
 
 
-
+@pytest.mark.parametrize("test_args, expected_result", [
+    (["foo.py"], False), (["foo.py", "-S"], True)
+])
+def test_argument_parsing_save_to_file(test_args, expected_result):
+    result = line_checker.argument_parsing(test_args)
+    assert result.save_to_file == expected_result
