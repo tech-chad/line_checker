@@ -101,8 +101,11 @@ class Display:
         print(f"{self.red}{msg}{self.reset_color}")
 
 
-def save_results_to_file(file_list: List[str], fail_list: list):
-    filename = f"line_checker_out{time.strftime('%Y-%m-%d-%H%M%S')}"
+def save_results_to_file(file_list: List[str],
+                         fail_list: list,
+                         filename: str):
+    if filename is None:
+        filename = f"line_checker_out{time.strftime('%Y-%m-%d-%H%M%S')}"
     data = ""
     data += "line checker\n"
     if fail_list:
@@ -169,6 +172,8 @@ def argument_parsing(argv: Optional[Sequence[str]] = None) -> argparse.Namespace
                         help="Quiet mode. No output unless fail or error")
     parser.add_argument("-S", dest="save_to_file", action="store_true",
                         help="Save output to file")
+    parser.add_argument("--out_file", action="store", metavar="filename",
+                        help="file name to save results to")
     parser.add_argument("--no_color", dest="color", action="store_false",
                         help="turn off color output")
     parser.add_argument("--version", action="version",
@@ -210,7 +215,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 for fail_file in fails:
                     display.failed_details(fail_file[0], fail_file[1])
             if args.save_to_file:
-                save_results_to_file(files_to_check, fails)
+                save_results_to_file(files_to_check, fails, args.out_file)
             return 0
 
 

@@ -513,3 +513,17 @@ def test_main_file_failed_quiet_mode_save_to_file(make_test_file, capsys):
         with open(f"line_checker_out{test_date_time}", "r") as f:
             data = f.read()
         assert data == expected
+
+
+def test_main_file_save_to_file_out_file(make_test_file):
+    line_data = [
+        "# line 1 comment line",
+        "print('hello world')",
+    ]
+    file_data = "".join(line_data)
+    tf = make_test_file("foo.py", file_data)
+    result = line_checker.main([tf, "-S", "--out_file", "test_out"])
+    with open("test_out", "r") as f:
+        data = f.read()
+    assert data == "line checker\n1 file checked: passed\n"
+    assert result == 0

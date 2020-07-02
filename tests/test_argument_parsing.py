@@ -67,3 +67,19 @@ def test_display_version(capsys):
 def test_argument_parsing_save_to_file(test_args, expected_result):
     result = line_checker.argument_parsing(test_args)
     assert result.save_to_file == expected_result
+
+
+@pytest.mark.parametrize("test_args, expected_result", [
+    (["foo.py", "-S"], None),
+    (["foo.py", "-S", "--out_file", "test_out"], "test_out")
+])
+def test_argument_parsing_save_file_name(test_args, expected_result):
+    result = line_checker.argument_parsing(test_args)
+    assert result.out_file == expected_result
+
+
+def test_argument_parsing_save_file_name_no_file_entered(capsys):
+    with pytest.raises(SystemExit):
+        line_checker.argument_parsing(["foo.py", "--out_file"])
+    captured_output = capsys.readouterr().err
+    assert "--out_file: expected one argument" in captured_output
